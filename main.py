@@ -122,7 +122,7 @@ async def startup_event():
 
         for username, password, full_name in test_users:
             # 檢查帳號是否已存在
-            user_exists = db.query(models.User).filter(models.User.username == username).first()
+            user_exists = db.query(models.UserModel).filter(models.UserModel.username == username).first()
             if not user_exists:
                 new_user = models.User(
                     username=username, 
@@ -185,3 +185,9 @@ def clear_all(db: Session = Depends(get_db)):
     db.query(models.ColumnModel).delete()
     db.commit()
     return {"message": "看板已徹底清空"}
+
+
+@app.get("/check-db")
+def check_db(db: Session = Depends(get_db)):
+    users = db.query(models.UserModel).all()
+    return {"count": len(users), "users": [u.username for u in users]}
