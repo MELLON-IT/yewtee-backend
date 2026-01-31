@@ -146,6 +146,11 @@ def clear_all(db: Session = Depends(get_db)):
     db.commit()
     return {"message": "看板已徹底清空"}
 
-# 最後掛載 Socket.io (放在最後)
-#app.mount("/socket.io", sio_app)
-sio_app = socketio.ASGIApp(sio, other_asgi_app=app)
+# 6. Socket.io 服務
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
+
+# 關鍵修正：改回用 mount，但把 sio_app 包裝寫清楚
+sio_app = socketio.ASGIApp(sio)
+app.mount("/socket.io", sio_app)
+
+# 確保 Start Command 是 uvicorn main:app
