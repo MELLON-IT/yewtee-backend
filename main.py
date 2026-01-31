@@ -93,6 +93,10 @@ def login(data: dict = Body(...)):
     try:
         username = data.get("username")
         password = data.get("password")
+
+        # --- 加入這行除錯 ---
+        print(f"收到登入請求: 帳號={username}, 密碼={password}")
+        
         user = db.query(models.UserModel).filter(models.UserModel.username == username).first()
         if not user or user.hashed_password != password:
             raise HTTPException(status_code=400, detail="帳號或密碼錯誤")
