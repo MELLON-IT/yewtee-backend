@@ -34,6 +34,12 @@ def get_db():
 
 # 自動建立資料表
 models.Base.metadata.create_all(bind=engine)
+init_db()  # 呼叫你剛才寫的多人版本
+
+if __name__ == "__main__":
+    import uvicorn
+    # 這裡的 port 會由 Render 自動分配
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # --- 路由開始 ---
 
