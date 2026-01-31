@@ -32,14 +32,49 @@ def get_db():
     finally:
         db.close()
 
-# 自動建立資料表
-models.Base.metadata.create_all(bind=engine)
-init_db()  # 呼叫你剛才寫的多人版本
+# 4. 統一初始化函式
+def init_db():
+    db = SessionLocal()
+    try:
+        # A. 欄位初始化
+        if db.query(models.ColumnModel).count() == 0:
+            db.add_all([
+                models.ColumnModel(title="待辦中", position=1),
+                models.ColumnModel(title="進行中", position=2),
+                models.ColumnModel(title="已完成", position=3)
+            ])
+            db.commit()
+            print("Columns initialized!")
 
-if __name__ == "__main__":
-    import uvicorn
-    # 這裡的 port 會由 Render 自動分配
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+        # B. 帳號初始化
+        test_users = [
+            ("admin", "admin123", "Admin"),
+            ("stephen", "123", "Stephen"),
+            ("bernie", "123", "Bernie"),
+            ("jenny", "123", "Jenny")
+        ]
+
+        for username, password, full_name in test_users:
+            # 統一使用 UserModel
+            user_exists = db.query(models.UserModel).filter(models.UserModel.username == username).first()
+            if not user_exists:
+                new_user = models.UserModel(
+                    username=username, 
+                    hashed_password=password, 
+                    full_name=full_name
+                )
+                db.add(new_user)
+                print(f"User {username} created!")
+        db.commit()
+    except Exception as e:
+        print(f"❌ 初始化發生錯誤: {e}")
+    finally:
+        db.close()
+
+# 執行初始化 (移除重複的 startup_event)
+models.Base.metadata.create_all(bind=engine)
+init_db()
+
 
 # --- 路由開始 ---
 
