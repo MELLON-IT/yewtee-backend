@@ -147,4 +147,5 @@ def clear_all(db: Session = Depends(get_db)):
     return {"message": "看板已徹底清空"}
 
 # 最後掛載 Socket.io (放在最後)
-app.mount("/socket.io", sio_app)
+#app.mount("/socket.io", sio_app)
+sio_app = socketio.ASGIApp(sio, other_asgi_app=app)
