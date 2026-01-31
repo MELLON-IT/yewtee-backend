@@ -88,25 +88,33 @@ def check_db():
         db.close()
 
 @app.post("/login")
-def login(data: dict = Body(...)):
-    db = SessionLocal()
-    try:
-        username = data.get("username")
-        password = data.get("password")
+def login(data: dict = Body(...), db: Session = Depends(get_db)):
+    # 這裡增加 print，讓你在 Render Log 可以看到前端到底傳了什麼
+    print(f"--- 登入嘗試 ---")
+    print(f"前端傳來的原始資料: {data}")
 
-        # --- 加入這行除錯 ---
-        print(f"收到登入請求: 帳號={username}, 密碼={password}")
-        
-        user = db.query(models.UserModel).filter(models.UserModel.username == username).first()
-        if not user or user.hashed_password != password:
-            raise HTTPException(status_code=400, detail="帳號或密碼錯誤")
-        return {
-            "username": user.username,
-            "full_name": user.full_name,
-            "role": "admin" if user.username == "admin" else "user"
-        }
-    finally:
-        db.close()
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="請輸入帳號與密碼")
+
+    user = db.query(models.UserModel).filter(models.UserModel.username == username).first()
+
+    if not user:
+        print(f"❌ 登入失敗: 找不到用戶 {username}")
+        raise HTTPException(status_code=400, detail="帳號不存在")
+
+    if user.hashed_password != password:
+        print(f"❌ 登入失敗: 用戶 {username} 密碼錯誤")
+        raise HTTPException(status_code=400, detail="密碼不正確")
+
+    print(f"✅ 登入成功: {username}")
+    return {
+        "username": user.username,
+        "full_name": user.full_name,
+        "role": "admin" if user.username == "admin" else "user"
+    }
 
 @app.get("/board", response_model=List[schemas.ColumnSchema])
 async def get_board(db: Session = Depends(get_db)):
