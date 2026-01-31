@@ -58,7 +58,6 @@ def login(data: dict = Body(...), db: Session = Depends(get_db)):
     }
 
 @app.on_event("startup")
-@app.on_event("startup")
 async def startup_event():
     db = SessionLocal()
     try:
@@ -72,24 +71,28 @@ async def startup_event():
             db.commit()
 
         # 2. 四個測試帳號初始化
+        # 定義預設帳號清單 (帳號, 密碼, 全名)
         test_users = [
-            {"u": "admin", "n": "Admin", "p": "1234"},
-            {"u": "stephen", "n": "Stephen", "p": "1234"},
-            {"u": "bernie", "n": "Bernie", "p": "1234"},
-            {"u": "jenny", "n": "Jenny", "p": "1234"}
+            ("admin", "admin123", "Admin"),
+            ("stephen", "123", "Stephen"),
+            ("bernie", "123", "Bernie"),
+            ("jenny", "123", "Jenny")
         ]
 
-        for user_data in test_users:
-            if db.query(models.UserModel).filter(models.UserModel.username == user_data["u"]).count() == 0:
-                new_user = models.UserModel(
-                    username=user_data["u"],
-                    full_name=user_data["n"],
-                    hashed_password=user_data["p"]
+        for username, password, full_name in test_users:
+            # 檢查帳號是否已存在
+            user_exists = db.query(models.User).filter(models.User.username == username).first()
+            if not user_exists:
+                new_user = models.User(
+                    username=username, 
+                    password=password, 
+                    full_name=full_name
                 )
                 db.add(new_user)
-
+                print(f"User {username} created!")
+        
         db.commit()
-        print("✅ 四個測試帳號 (admin, stephen, bernie, jenny) 已就緒！")
+        db.close()
 
     except Exception as e:
         print(f"❌ 初始化發生錯誤: {e}")
